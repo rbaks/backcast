@@ -11,7 +11,6 @@ import { computeStats, monthlyMoments } from "./core/stats.ts";
 import { BundledJsonProvider } from "./core/provider.ts";
 import {
   SCENARIO_ANNUAL_SHIFT,
-  type ConePoint,
   type Scenario,
   type SimParams,
 } from "./core/montecarlo.ts";
@@ -168,7 +167,7 @@ export default function App() {
         }
       : null;
 
-  const cone: ConePoint[] | null = useProjectionCone(simParams);
+  const { band: cone, computing: coneComputing } = useProjectionCone(simParams);
   const projected =
     cone && cone.length > 0
       ? {
@@ -237,6 +236,7 @@ export default function App() {
             startDate={portfolio.startDate}
             missingTickers={result.missingTickers}
             knownTickers={knownTickers}
+            loading={loading}
             onAmountChange={onAmountChange}
             onRemove={onRemove}
             onAdd={onAdd}
@@ -246,9 +246,14 @@ export default function App() {
 
         <div className="col center">
           <div className="readout">
-            <span className="big tnum">
-              {status === "ready" ? formatCurrency(endValue) : "—"}
-            </span>
+            {status === "loading" ? (
+              <span className="sk-bar sk-big" aria-label="Loading portfolio value" />
+            ) : (
+              <span className="big tnum">
+                {status === "ready" ? formatCurrency(endValue) : "—"}
+              </span>
+            )}
+            {status === "loading" && <span className="sk-bar sk-chg" />}
             {status === "ready" && windowed.length > 1 && (
               <span className={`chg tnum ${dir === "down" ? "down" : "up"}`}>
                 {glyph(dir)} {formatPercent(change)} ({formatSignedCurrency(gain)})
@@ -271,6 +276,7 @@ export default function App() {
               scenario={scenario}
               onScenario={setScenario}
               projected={projected}
+              computing={coneComputing}
             />
           )}
 
@@ -288,7 +294,12 @@ export default function App() {
             </div>
           )}
           {status === "ready" && windowed.length > 1 && (
-            <ChartPanel series={windowed} cone={forecast ? cone : null} theme={theme} />
+            <ChartPanel
+              series={windowed}
+              cone={forecast ? cone : null}
+              computing={forecast && coneComputing}
+              theme={theme}
+            />
           )}
           {status === "ready" && windowed.length <= 1 && (
             <div className="chart-empty">

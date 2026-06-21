@@ -15,18 +15,34 @@ function Stat({ k, value, dir }: { k: string; value: string; dir?: "up" | "down"
   );
 }
 
+function StatSkeleton({ k }: { k: string }) {
+  return (
+    <div className="stat">
+      <span className="k">{k}</span>
+      <span className="sk-bar sk-stat" aria-label={`Loading ${k}`} />
+    </div>
+  );
+}
+
 const DASH = "—";
+
+const STAT_KEYS = [
+  "CAGR",
+  "Total return",
+  "Volatility (ann.)",
+  "Max drawdown",
+  "Best year",
+  "Worst year",
+];
 
 export function StatsPanel({ stats, loading }: Props) {
   if (loading || !stats) {
     return (
       <>
         <div className="phead">Performance</div>
-        {["CAGR", "Total return", "Volatility (ann.)", "Max drawdown", "Best year", "Worst year"].map(
-          (k) => (
-            <Stat key={k} k={k} value={DASH} />
-          ),
-        )}
+        {STAT_KEYS.map((k) => (
+          <StatSkeleton key={k} k={k} />
+        ))}
         <Caveat />
       </>
     );

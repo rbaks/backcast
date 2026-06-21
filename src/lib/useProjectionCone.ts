@@ -11,8 +11,16 @@ interface WorkerReply {
   band: ConePoint[];
 }
 
-export function useProjectionCone(params: SimParams | null): ConePoint[] | null {
+export interface ConeState {
+  /** Latest cone band, or null before the first run / when disabled. */
+  band: ConePoint[] | null;
+  /** True from the moment a run is requested until its result lands. */
+  computing: boolean;
+}
+
+export function useProjectionCone(params: SimParams | null): ConeState {
   const [band, setBand] = useState<ConePoint[] | null>(null);
+  const [computing, setComputing] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const reqRef = useRef(0);
 
@@ -38,14 +46,19 @@ export function useProjectionCone(params: SimParams | null): ConePoint[] | null 
   useEffect(() => {
     if (!params) {
       setBand(null);
+      setComputing(false);
       return;
     }
     const reqId = ++reqRef.current;
     const worker = workerRef.current;
+    setComputing(true);
 
     if (worker) {
       const onMessage = (e: MessageEvent<WorkerReply>) => {
-        if (e.data.reqId === reqRef.current) setBand(e.data.band);
+        if (e.data.reqId === reqRef.current) {
+          setBand(e.data.band);
+          setComputing(false);
+        }
       };
       worker.addEventListener("message", onMessage);
       worker.postMessage({ reqId, params });
@@ -54,9 +67,12 @@ export function useProjectionCone(params: SimParams | null): ConePoint[] | null 
 
     // Main-thread fallback (also the test path).
     const { band: result } = simulateCone(params);
-    if (reqId === reqRef.current) setBand(result);
+    if (reqId === reqRef.current) {
+      setBand(result);
+      setComputing(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  return band;
+  return { band, computing };
 }
