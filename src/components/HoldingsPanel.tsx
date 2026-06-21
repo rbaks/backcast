@@ -7,6 +7,7 @@ interface Props {
   holdings: Holding[];
   startDate: string;
   missingTickers: string[];
+  knownTickers: string[];
   onAmountChange: (index: number, amount: number) => void;
   onRemove: (index: number) => void;
   onAdd: (ticker: string, amount: number) => void;
@@ -17,6 +18,7 @@ export function HoldingsPanel({
   holdings,
   startDate,
   missingTickers,
+  knownTickers,
   onAmountChange,
   onRemove,
   onAdd,
@@ -26,11 +28,21 @@ export function HoldingsPanel({
   const [newTicker, setNewTicker] = useState("");
   const [newAmount, setNewAmount] = useState("");
 
+  // Validity drives the button's disabled state so an empty/zero amount no
+  // longer fails silently. The unknown-ticker hint warns BEFORE adding that a
+  // symbol outside the dataset won't be counted (it used to add, then surprise).
+  const trimmedTicker = newTicker.trim().toUpperCase();
+  const amount = Number(newAmount);
+  const amountValid = Number.isFinite(amount) && amount > 0;
+  const canAdd = trimmedTicker !== "" && amountValid;
+  const unknownTicker =
+    trimmedTicker !== "" &&
+    knownTickers.length > 0 &&
+    !knownTickers.includes(trimmedTicker);
+
   const submitAdd = () => {
-    const t = newTicker.trim().toUpperCase();
-    const a = Number(newAmount);
-    if (!t || !Number.isFinite(a) || a <= 0) return;
-    onAdd(t, a);
+    if (!canAdd) return;
+    onAdd(trimmedTicker, amount);
     setNewTicker("");
     setNewAmount("");
   };
@@ -66,11 +78,19 @@ export function HoldingsPanel({
         <input
           className="tkr"
           placeholder="TICKER"
+          list="ticker-universe"
           value={newTicker}
           aria-label="New ticker"
           onChange={(e) => setNewTicker(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submitAdd()}
         />
+        <datalist id="ticker-universe">
+          {knownTickers.map((t) => (
+            <option key={t} value={t}>
+              {tickerName(t)}
+            </option>
+          ))}
+        </datalist>
         <input
           className="amt"
           type="number"
@@ -81,8 +101,20 @@ export function HoldingsPanel({
           onChange={(e) => setNewAmount(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submitAdd()}
         />
-        <button onClick={submitAdd}>+ add</button>
+        <button onClick={submitAdd} disabled={!canAdd}>
+          + add
+        </button>
       </div>
+      {unknownTicker ? (
+        <div className="addhint warn-hint">
+          {trimmedTicker} not in dataset — it'll be added but won't be counted.
+        </div>
+      ) : (
+        newTicker.trim() !== "" &&
+        !amountValid && (
+          <div className="addhint">Enter an amount above $0 to add.</div>
+        )
+      )}
 
       <div className="startrow">
         <label htmlFor="start">Start date</label>
