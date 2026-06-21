@@ -1,15 +1,15 @@
 # TODOS
 
-## Run Monte Carlo in a Web Worker (v2, before step 7)
-- **What:** Move the Monte Carlo simulation off the main thread into a Web Worker.
-- **Why:** Thousands of simulations on the main thread will freeze the UI (no scroll, no
-  input) for the duration. A worker keeps the terminal responsive while it computes.
-- **Pros:** Smooth UX; can show a progress indicator; can run more sims without jank.
-- **Cons:** Slight plumbing (serialize inputs/outputs across the worker boundary).
-- **Context:** Only relevant once build step 7 (Monte Carlo cone) starts. The cone samples
-  from annualized historical mean/vol over ~360 monthly points. Keep the sim function pure
-  in `core/montecarlo.ts` so it can be called from both the worker and a unit test.
-- **Depends on:** step 6/7 of the v2 build.
+## ✅ DONE — Monte Carlo cone in a Web Worker (v2)
+- **Shipped:** Forward projection cone (p10/median/p90), horizon slider (1–30y), and
+  bear/base/bull scenario toggles. The sim is pure in `core/montecarlo.ts` (seeded,
+  unit-tested), runs in `core/montecarlo.worker.ts` off the main thread via the
+  `useProjectionCone` hook, and falls back to a synchronous main-thread run where Web
+  Workers are unavailable (e.g. jsdom under test). The cone resamples the portfolio's
+  own historical monthly mean/vol forward across 1,000 paths.
+- **Future polish (not blocking):** progress indicator during long runs; non-parametric
+  bootstrap resampling as an alternative to the normal-draw model; richer percentile bands
+  (p25/p75) for a denser cone.
 
 ## A→B backend migration trigger (when to add a backend)
 - **What:** Record the concrete signal that means it's time to swap `BundledJsonProvider`
