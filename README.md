@@ -55,4 +55,9 @@ resolution. Start dates clamp forward to the earliest common data and warn rathe
 than zero-fill. Backtests of individual past winners overstate reality
 (survivorship bias) — broad ETFs minimize it; the UI says so.
 
+## Deploy
+
+Static frontend — connect the repo to Vercel or Netlify once and every push
+ships. Configs for both are checked in. See [DEPLOY.md](DEPLOY.md).
+
 See [DESIGN.md](DESIGN.md) for the design system and [TODOS.md](TODOS.md) for v2.

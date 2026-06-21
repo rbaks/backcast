@@ -1,0 +1,13 @@
+# Netlify deploy config. Static SPA: build to dist/, serve index.html for any
+# path the build didn't emit (real files like /prices.json are served first).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
