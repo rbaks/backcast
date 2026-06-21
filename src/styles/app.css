@@ -107,6 +107,25 @@
   padding: 8px 12px;
   border-bottom: 1px solid var(--grid);
 }
+/* Weight bar: a subtle fill behind the row, width = the holding's portfolio
+   weight. Reads like a horizontal gauge so allocation is visible at a glance,
+   not just from the percentage number. The fill is the row's own background,
+   so text always sits on top — no overlay/z-index needed. */
+.hold.weighted {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 16%, transparent) var(--w, 0%),
+    transparent var(--w, 0%)
+  );
+  transition: background 0.2s ease;
+}
+.hold.weighted.missing {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--loss) 16%, transparent) var(--w, 0%),
+    transparent var(--w, 0%)
+  );
+}
 .hold .tk {
   font-family: var(--mono);
   font-weight: 600;

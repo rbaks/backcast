@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import type { Holding } from "../core/types.ts";
 import { formatCurrency } from "../lib/format.ts";
 import { tickerName } from "../lib/universe.ts";
@@ -57,7 +57,11 @@ export function HoldingsPanel({
         const weight = total > 0 ? (h.amount / total) * 100 : 0;
         const missing = missingTickers.includes(h.ticker.toUpperCase());
         return (
-          <div className="hold" key={`${h.ticker}-${i}`}>
+          <div
+            className={`hold weighted${missing ? " missing" : ""}`}
+            key={`${h.ticker}-${i}`}
+            style={{ "--w": `${weight}%` } as CSSProperties}
+          >
             <span className="tk">{h.ticker}</span>
             <input
               className="amt tnum"
