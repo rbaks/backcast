@@ -14,6 +14,8 @@ vi.mock("lightweight-charts", () => {
   return {
     createChart: () => chart,
     AreaSeries: "Area",
+    LineSeries: "Line",
+    LineStyle: { Solid: 0, Dotted: 1, Dashed: 2 },
     ColorType: { Solid: "solid" },
   };
 });

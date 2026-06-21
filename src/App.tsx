@@ -1,12 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { computePortfolioValueSeries } from "./core/backtest.ts";
-import { computeStats } from "./core/stats.ts";
+import { computeStats, monthlyMoments } from "./core/stats.ts";
 import { BundledJsonProvider } from "./core/provider.ts";
+import {
+  SCENARIO_ANNUAL_SHIFT,
+  type ConePoint,
+  type Scenario,
+  type SimParams,
+} from "./core/montecarlo.ts";
 import type { Holding, Portfolio, PriceSeries, ValuePoint } from "./core/types.ts";
 import { buildShareUrl, encodePortfolio, readPortfolioFromQuery } from "./core/url.ts";
+import { useProjectionCone } from "./lib/useProjectionCone.ts";
 import { HoldingsPanel } from "./components/HoldingsPanel.tsx";
 import { StatsPanel } from "./components/StatsPanel.tsx";
 import { ChartPanel } from "./components/ChartPanel.tsx";
+import { ProjectionControls } from "./components/ProjectionControls.tsx";
 import { TopBar, type Range } from "./components/TopBar.tsx";
 import {
   applyTheme,
@@ -51,6 +59,11 @@ export default function App() {
   const [prices, setPrices] = useState<Record<string, PriceSeries>>({});
   const [status, setStatus] = useState<DataStatus>("loading");
   const [shared, setShared] = useState(false);
+
+  // Forward projection (v2): a Monte Carlo cone of outcomes.
+  const [forecast, setForecast] = useState(true);
+  const [horizon, setHorizon] = useState(10); // years
+  const [scenario, setScenario] = useState<Scenario>("base");
 
   useEffect(() => {
     applyTheme(theme);
@@ -105,6 +118,35 @@ export default function App() {
   }, [result.series, range]);
 
   const stats = useMemo(() => computeStats(windowed), [windowed]);
+
+  // --- forward projection ---
+  // Moments come from the full history (more data = steadier estimate); the cone
+  // is anchored at the chart's last visible point. The scenario shifts the mean.
+  const moments = useMemo(() => monthlyMoments(result.series), [result.series]);
+  const lastPoint = windowed[windowed.length - 1];
+  const simParams: SimParams | null =
+    status === "ready" && forecast && lastPoint && moments.vol > 0
+      ? {
+          startValue: lastPoint.value,
+          startDate: lastPoint.date,
+          monthlyMean: moments.mean + SCENARIO_ANNUAL_SHIFT[scenario] / 12,
+          monthlyVol: moments.vol,
+          months: horizon * 12,
+          sims: 1000,
+          seed: 42,
+        }
+      : null;
+
+  const cone: ConePoint[] | null = useProjectionCone(simParams);
+  const projected =
+    cone && cone.length > 0
+      ? {
+          years: horizon,
+          p10: cone[cone.length - 1].p10,
+          p50: cone[cone.length - 1].p50,
+          p90: cone[cone.length - 1].p90,
+        }
+      : null;
 
   // --- handlers ---
   const setHoldings = (holdings: Holding[]) =>
@@ -188,6 +230,18 @@ export default function App() {
             </div>
           </div>
 
+          {status === "ready" && windowed.length > 1 && (
+            <ProjectionControls
+              enabled={forecast}
+              onToggle={() => setForecast((f) => !f)}
+              horizon={horizon}
+              onHorizon={setHorizon}
+              scenario={scenario}
+              onScenario={setScenario}
+              projected={projected}
+            />
+          )}
+
           {status === "loading" && <div className="skeleton" />}
           {status === "error" && (
             <div className="chart-empty">
@@ -202,7 +256,7 @@ export default function App() {
             </div>
           )}
           {status === "ready" && windowed.length > 1 && (
-            <ChartPanel series={windowed} theme={theme} />
+            <ChartPanel series={windowed} cone={forecast ? cone : null} theme={theme} />
           )}
           {status === "ready" && windowed.length <= 1 && (
             <div className="chart-empty">

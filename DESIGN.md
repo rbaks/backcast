@@ -67,6 +67,19 @@ First-run pre-loads a real sample so the screen is alive and teaching immediatel
   become bottom tabs/sheets, one tap away. Not a naive vertical stack.
 - Touch targets ≥ 44px. Keyboard: all inputs tabbable, visible focus ring (`--accent`).
 
+## Forward projection cone (v2)
+
+- **Color separates fact from model.** The factual past uses `--gain` (green); the modeled
+  future uses `--accent` (amber). One glance distinguishes "what happened" from "what might."
+- The cone is a filled 80% band (p10–p90) in translucent accent, a dashed accent median, and
+  it emanates from the last real value so past and future read as one continuous chart.
+- Rendered on Lightweight Charts with a band-mask technique: a p90 area (translucent accent
+  fill) under a p10 area filled with the **solid** chart background, which erases everything
+  below p10 and leaves the band. The chart background is therefore set solid (`--bg`), not
+  transparent, so the mask matches exactly — re-applied on theme switch like the line colors.
+- **Honesty over precision:** show a *range* ("80% range $X–$Y"), never a lone future number.
+  The cone widening over time is the point. Scenarios (bear/base/bull) shift the mean only.
+
 ## Survivorship caveat (content)
 
 Stats panel shows a persistent caveat: individual past-winner backtests overstate reality;

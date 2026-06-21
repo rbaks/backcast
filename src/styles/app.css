@@ -237,6 +237,104 @@
   color: var(--dim);
   margin-top: 2px;
 }
+/* ---- forecast / projection controls ---- */
+.forecast {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.fc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fc-toggle {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.fc-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.fc-toggle.on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.fc-horizon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fc-k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--label);
+}
+.fc-horizon input[type="range"] {
+  width: 120px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.fc-yrs {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 30px;
+}
+.fc-scen {
+  display: flex;
+  gap: 2px;
+}
+.fc-scen button {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+  background: none;
+  border: 1px solid transparent;
+  padding: 3px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.fc-scen button:hover {
+  color: var(--text);
+}
+.fc-scen button.on {
+  color: var(--bg);
+  background: var(--accent);
+  font-weight: 600;
+}
+.fc-readout {
+  margin-top: 6px;
+  font-size: 11px;
+}
+.fc-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--label);
+}
+.fc-med {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.fc-range {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+}
+
 .chart {
   flex: 1;
   position: relative;

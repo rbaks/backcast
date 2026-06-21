@@ -49,6 +49,18 @@ function periodReturns(series: ValuePoint[]): number[] {
   return rs;
 }
 
+/**
+ * Mean and standard deviation of the series' period-over-period returns.
+ * For monthly data these are *monthly* moments — the projection engine resamples
+ * them forward. Returns zeros for a series too short to have ≥2 returns.
+ */
+export function monthlyMoments(series: ValuePoint[]): { mean: number; vol: number } {
+  const rs = periodReturns(series);
+  if (rs.length < 2) return { mean: 0, vol: 0 };
+  const mean = rs.reduce((s, x) => s + x, 0) / rs.length;
+  return { mean, vol: sampleStdDev(rs) };
+}
+
 /** Calendar-year returns, using each year's last value vs the prior year's last. */
 export function yearlyReturns(series: ValuePoint[]): YearReturn[] {
   if (series.length === 0) return [];

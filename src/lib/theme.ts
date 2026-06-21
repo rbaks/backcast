@@ -30,16 +30,26 @@ export interface ChartColors {
   line: string;
   areaTop: string;
   areaBottom: string;
+  /** Chart background — solid so the cone-band mask can paint over it exactly. */
+  bg: string;
+  /** Cone edge/median color (accent amber): the *modeled* future, not the past. */
+  cone: string;
+  /** Translucent fill between the cone's p10 and p90 bands. */
+  coneFill: string;
 }
 
 export function readChartColors(): ChartColors {
   const line = cssVar("--gain") || "#2ebd85";
+  const cone = cssVar("--accent") || "#f5a623";
   return {
     text: cssVar("--dim") || "#6c7a8d",
     grid: cssVar("--grid") || "#16202c",
     line,
     areaTop: hexToRgba(line, 0.25),
     areaBottom: hexToRgba(line, 0),
+    bg: cssVar("--bg") || "#0a0e14",
+    cone,
+    coneFill: hexToRgba(cone, 0.16),
   };
 }
 
