@@ -66,6 +66,9 @@ export default function App() {
   const [prices, setPrices] = useState<Record<string, PriceSeries>>({});
   const [status, setStatus] = useState<DataStatus>("loading");
   const [shared, setShared] = useState(false);
+  // The tickers the provider can actually serve — feeds add-row autocomplete
+  // and the "not in dataset" warning so users aren't left guessing.
+  const [knownTickers, setKnownTickers] = useState<string[]>([]);
 
   // Forward projection (v2): a Monte Carlo cone of outcomes.
   const [forecast, setForecast] = useState(true);
@@ -80,6 +83,22 @@ export default function App() {
   useLayoutEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  // Load the served-ticker universe once for autocomplete / validation.
+  useEffect(() => {
+    let cancelled = false;
+    provider
+      .listTickers()
+      .then((t) => {
+        if (!cancelled) setKnownTickers(t);
+      })
+      .catch(() => {
+        /* non-fatal: add-row just loses autocomplete */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
 
   // Keep the address bar in sync (shareable on refresh/bookmark).
   useEffect(() => {
@@ -217,6 +236,7 @@ export default function App() {
             holdings={portfolio.holdings}
             startDate={portfolio.startDate}
             missingTickers={result.missingTickers}
+            knownTickers={knownTickers}
             onAmountChange={onAmountChange}
             onRemove={onRemove}
             onAdd={onAdd}
