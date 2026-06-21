@@ -9,14 +9,15 @@ function setup(overrides = {}) {
     startDate: "2015-01-01",
     missingTickers: [],
     knownTickers: ["AAPL", "VOO", "QQQ"],
+    loading: false,
     onAmountChange: vi.fn(),
     onRemove: vi.fn(),
     onAdd,
     onStartDateChange: vi.fn(),
     ...overrides,
   };
-  render(<HoldingsPanel {...props} />);
-  return { onAdd };
+  const utils = render(<HoldingsPanel {...props} />);
+  return { onAdd, ...utils };
 }
 
 describe("HoldingsPanel add row", () => {
@@ -52,5 +53,23 @@ describe("HoldingsPanel add row", () => {
     expect(button).toBeEnabled();
     fireEvent.click(button);
     expect(onAdd).toHaveBeenCalledWith("TSLA", 500);
+  });
+});
+
+describe("HoldingsPanel price loading", () => {
+  it("shows a per-row loader and suppresses the 'missing' error while loading", () => {
+    const { container } = setup({
+      loading: true,
+      // Even though VOO reads as missing against the empty snapshot, that's just
+      // the load in flight — no red error should show yet.
+      missingTickers: ["VOO"],
+    });
+    expect(container.querySelector(".sk-bar.sk-row")).toBeInTheDocument();
+    expect(screen.queryByText(/no price data/i)).not.toBeInTheDocument();
+  });
+
+  it("flags a genuinely missing ticker once loaded", () => {
+    setup({ loading: false, missingTickers: ["VOO"] });
+    expect(screen.getByText(/no price data/i)).toBeInTheDocument();
   });
 });

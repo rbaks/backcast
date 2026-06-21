@@ -17,6 +17,8 @@ interface Props {
   onScenario: (s: Scenario) => void;
   /** Band at the horizon, or null while computing / when disabled. */
   projected: Projected | null;
+  /** Monte Carlo run in flight (first run or a re-run after a control change). */
+  computing: boolean;
 }
 
 const SCENARIO_LABEL: Record<Scenario, string> = {
@@ -33,6 +35,7 @@ export function ProjectionControls({
   scenario,
   onScenario,
   projected,
+  computing,
 }: Props) {
   return (
     <div className="forecast">
@@ -85,6 +88,14 @@ export function ProjectionControls({
             80% range {formatCurrency(projected.p10)}–
             {formatCurrency(projected.p90)}
           </span>
+          {computing && <span className="fc-computing"> · updating…</span>}
+        </div>
+      )}
+
+      {enabled && !projected && computing && (
+        <div className="fc-readout">
+          <span className="fc-label">PROJECTED {horizon}Y · median</span>{" "}
+          <span className="sk-bar sk-proj" aria-label="Computing projection" />
         </div>
       )}
     </div>

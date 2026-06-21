@@ -17,11 +17,13 @@ interface Props {
   series: ValuePoint[];
   /** Forward projection band, anchored at the last historical point, or null. */
   cone: ConePoint[] | null;
+  /** Monte Carlo run in flight — shows a non-blocking "projecting…" overlay. */
+  computing?: boolean;
   /** Re-themes the chart in JS when this changes (CSS can't reach the canvas). */
   theme: Theme;
 }
 
-export function ChartPanel({ series, cone, theme }: Props) {
+export function ChartPanel({ series, cone, computing = false, theme }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const histRef = useRef<ISeriesApi<"Area"> | null>(null);
@@ -151,5 +153,14 @@ export function ChartPanel({ series, cone, theme }: Props) {
     medianRef.current?.applyOptions({ color: c.cone });
   }, [theme]);
 
-  return <div className="chart" ref={containerRef} />;
+  return (
+    <div className="chart-wrap">
+      <div className="chart" ref={containerRef} />
+      {computing && (
+        <div className="chart-computing" aria-live="polite">
+          <span className="chart-computing-pill">◴ projecting…</span>
+        </div>
+      )}
+    </div>
+  );
 }

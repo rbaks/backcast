@@ -8,6 +8,8 @@ interface Props {
   startDate: string;
   missingTickers: string[];
   knownTickers: string[];
+  /** Prices still loading — show a per-row loader instead of a false "missing". */
+  loading: boolean;
   onAmountChange: (index: number, amount: number) => void;
   onRemove: (index: number) => void;
   onAdd: (ticker: string, amount: number) => void;
@@ -19,6 +21,7 @@ export function HoldingsPanel({
   startDate,
   missingTickers,
   knownTickers,
+  loading,
   onAmountChange,
   onRemove,
   onAdd,
@@ -69,7 +72,16 @@ export function HoldingsPanel({
             <button className="rm" onClick={() => onRemove(i)} aria-label={`Remove ${h.ticker}`}>
               remove
             </button>
-            {missing && <span className="err">No price data — not counted</span>}
+            {/* While prices load every ticker reads as "missing" against the empty
+                snapshot — show a loader, and only flag real gaps once loaded. */}
+            {loading ? (
+              <span
+                className="sk-bar sk-row"
+                aria-label={`Loading ${h.ticker} price`}
+              />
+            ) : (
+              missing && <span className="err">No price data — not counted</span>
+            )}
           </div>
         );
       })}
