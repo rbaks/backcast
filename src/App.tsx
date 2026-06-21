@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { computePortfolioValueSeries } from "./core/backtest.ts";
 import { computeStats, monthlyMoments } from "./core/stats.ts";
 import { BundledJsonProvider } from "./core/provider.ts";
@@ -65,7 +72,12 @@ export default function App() {
   const [horizon, setHorizon] = useState(10); // years
   const [scenario, setScenario] = useState<Scenario>("base");
 
-  useEffect(() => {
+  // Layout effect (not passive): the `data-theme` attribute swaps the CSS vars
+  // that ChartPanel reads to repaint its canvas. Effects fire child-before-parent,
+  // so a passive effect here would run AFTER ChartPanel's and leave the canvas one
+  // theme behind. Layout effects always precede passive ones, so the attribute is
+  // updated before any child reads it.
+  useLayoutEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
