@@ -40,11 +40,18 @@ export interface SimParams {
   seed: number;
 }
 
-/** One future month: the 80% band (p10..p90) and the median (p50). */
+/**
+ * One future month. Two nested bands plus the median:
+ *   - p10..p90 is the 80% band (the outer cone),
+ *   - p25..p75 is the 50% interquartile range (the denser inner cone),
+ *   - p50 is the median.
+ */
 export interface ConePoint {
   date: ISODate;
   p10: number;
+  p25: number;
   p50: number;
+  p75: number;
   p90: number;
 }
 
@@ -134,7 +141,9 @@ export function simulateCone(params: SimParams): ConeResult {
     band.push({
       date: addMonths(startDate, m + 1),
       p10: percentile(col, 0.1),
+      p25: percentile(col, 0.25),
       p50: percentile(col, 0.5),
+      p75: percentile(col, 0.75),
       p90: percentile(col, 0.9),
     });
   }

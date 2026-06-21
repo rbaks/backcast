@@ -29,12 +29,12 @@ describe("ProjectionControls loaders", () => {
       <ProjectionControls
         {...base({
           computing: true,
-          projected: { years: 10, p10: 100, p50: 200, p90: 300 },
+          projected: { years: 10, p10: 100, p25: 150, p50: 200, p75: 250, p90: 300 },
         })}
       />,
     );
     expect(screen.getByText(/updating…/i)).toBeInTheDocument();
-    expect(screen.queryByText(/80% range/i)).toBeInTheDocument();
+    expect(screen.queryByText(/80%/)).toBeInTheDocument();
   });
 
   it("renders no loader when idle with a band", () => {
@@ -42,7 +42,7 @@ describe("ProjectionControls loaders", () => {
       <ProjectionControls
         {...base({
           computing: false,
-          projected: { years: 10, p10: 100, p50: 200, p90: 300 },
+          projected: { years: 10, p10: 100, p25: 150, p50: 200, p75: 250, p90: 300 },
         })}
       />,
     );

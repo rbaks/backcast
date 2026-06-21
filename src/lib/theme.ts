@@ -36,6 +36,8 @@ export interface ChartColors {
   cone: string;
   /** Translucent fill between the cone's p10 and p90 bands. */
   coneFill: string;
+  /** Faint accent for the p25/p75 quartile lines — denser than fill, softer than the median. */
+  coneInner: string;
 }
 
 export function readChartColors(): ChartColors {
@@ -50,6 +52,7 @@ export function readChartColors(): ChartColors {
     bg: cssVar("--bg") || "#0a0e14",
     cone,
     coneFill: hexToRgba(cone, 0.16),
+    coneInner: hexToRgba(cone, 0.5),
   };
 }
 

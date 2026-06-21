@@ -4,7 +4,9 @@ import { formatCurrency } from "../lib/format.ts";
 interface Projected {
   years: number;
   p10: number;
+  p25: number;
   p50: number;
+  p75: number;
   p90: number;
 }
 
@@ -85,7 +87,8 @@ export function ProjectionControls({
           <span className="fc-label">PROJECTED {projected.years}Y · median</span>{" "}
           <span className="fc-med tnum">{formatCurrency(projected.p50)}</span>{" "}
           <span className="fc-range tnum">
-            80% range {formatCurrency(projected.p10)}–
+            50% {formatCurrency(projected.p25)}–{formatCurrency(projected.p75)}
+            {" · "}80% {formatCurrency(projected.p10)}–
             {formatCurrency(projected.p90)}
           </span>
           {computing && <span className="fc-computing"> · updating…</span>}

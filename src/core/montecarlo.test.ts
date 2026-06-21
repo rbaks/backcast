@@ -38,11 +38,13 @@ describe("simulateCone", () => {
     expect(band[119].date).toBe("2036-01-01");
   });
 
-  it("keeps percentiles ordered p10 <= p50 <= p90 at every step", () => {
+  it("keeps percentiles ordered p10 <= p25 <= p50 <= p75 <= p90 at every step", () => {
     const { band } = simulateCone(base);
     for (const p of band) {
-      expect(p.p10).toBeLessThanOrEqual(p.p50);
-      expect(p.p50).toBeLessThanOrEqual(p.p90);
+      expect(p.p10).toBeLessThanOrEqual(p.p25);
+      expect(p.p25).toBeLessThanOrEqual(p.p50);
+      expect(p.p50).toBeLessThanOrEqual(p.p75);
+      expect(p.p75).toBeLessThanOrEqual(p.p90);
     }
   });
 
