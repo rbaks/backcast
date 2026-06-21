@@ -27,18 +27,26 @@ public/
 
 ```bash
 npm install
-npm run dev         # local dev server
-npm test            # unit + component tests (Vitest)
+npm run dev          # local dev server
+npm test             # unit + component tests (Vitest)
 npm run typecheck
-npm run build       # production build -> dist/
-npm run gen:prices  # regenerate the sample price snapshot
+npm run build        # production build -> dist/
+npm run pull:prices  # refresh public/prices.json from Yahoo (real data)
+npm run gen:prices   # offline fallback: synthetic sample snapshot
 ```
 
 ## Data status
 
-`public/prices.json` is currently **synthetic** (geometric Brownian motion, seeded)
-so the app renders during development. Step 3 of the plan replaces it with a real
-Stooq monthly snapshot, validated against a published SPY total-return figure first.
+`public/prices.json` holds **real monthly adjusted closes** (total return —
+dividends reinvested) for ~35 symbols: broad ETFs, a handful of individual
+stocks, and 3 reference indices. Pulled from the Yahoo Finance chart API via
+`npm run pull:prices`.
+
+The pull is **gated by a validation check** (plan step 2): it reproduces SPY's
+2019 calendar total return and refuses to write the snapshot unless it matches
+the published figure (~+31.2%) within tolerance — proving both the math and the
+data source before anything is trusted. `gen:prices` produces a synthetic
+fallback if the network source is unavailable.
 
 ## Model assumptions (v1)
 
