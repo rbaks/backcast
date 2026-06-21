@@ -29,6 +29,8 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
   const histRef = useRef<ISeriesApi<"Area"> | null>(null);
   const p90Ref = useRef<ISeriesApi<"Area"> | null>(null);
   const p10Ref = useRef<ISeriesApi<"Area"> | null>(null);
+  const p75Ref = useRef<ISeriesApi<"Line"> | null>(null);
+  const p25Ref = useRef<ISeriesApi<"Line"> | null>(null);
   const medianRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   // Create the chart once.
@@ -65,6 +67,22 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
       lineWidth: 2,
       priceLineVisible: false,
     });
+    // p25/p75 quartile lines sit inside the 80% band, marking the tighter 50%
+    // interquartile range — a denser cone without a second fill to mask.
+    const p75 = chart.addSeries(LineSeries, {
+      lineWidth: 1,
+      lineStyle: LineStyle.Dotted,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    });
+    const p25 = chart.addSeries(LineSeries, {
+      lineWidth: 1,
+      lineStyle: LineStyle.Dotted,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    });
     const median = chart.addSeries(LineSeries, {
       lineWidth: 1,
       lineStyle: LineStyle.Dashed,
@@ -76,6 +94,8 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
     chartRef.current = chart;
     p90Ref.current = p90;
     p10Ref.current = p10;
+    p75Ref.current = p75;
+    p25Ref.current = p25;
     histRef.current = hist;
     medianRef.current = median;
 
@@ -83,6 +103,7 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
       chart.remove();
       chartRef.current = null;
       histRef.current = p90Ref.current = p10Ref.current = null;
+      p75Ref.current = p25Ref.current = null;
       medianRef.current = null;
     };
   }, []);
@@ -92,29 +113,23 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
     histRef.current?.setData(
       series.map((p) => ({ time: p.date as Time, value: p.value })),
     );
-    // Anchor the cone at the last historical point so it emanates from the line.
+    // Anchor each cone line at the last historical point so it emanates from the
+    // line rather than floating a month out.
     const anchor = series[series.length - 1];
-    const p90Data = cone
-      ? [
-          ...(anchor ? [{ time: anchor.date as Time, value: anchor.value }] : []),
-          ...cone.map((p) => ({ time: p.date as Time, value: p.p90 })),
-        ]
-      : [];
-    const p10Data = cone
-      ? [
-          ...(anchor ? [{ time: anchor.date as Time, value: anchor.value }] : []),
-          ...cone.map((p) => ({ time: p.date as Time, value: p.p10 })),
-        ]
-      : [];
-    const medianData = cone
-      ? [
-          ...(anchor ? [{ time: anchor.date as Time, value: anchor.value }] : []),
-          ...cone.map((p) => ({ time: p.date as Time, value: p.p50 })),
-        ]
-      : [];
-    p90Ref.current?.setData(p90Data);
-    p10Ref.current?.setData(p10Data);
-    medianRef.current?.setData(medianData);
+    const coneLine = (pick: (p: ConePoint) => number) =>
+      cone
+        ? [
+            ...(anchor
+              ? [{ time: anchor.date as Time, value: anchor.value }]
+              : []),
+            ...cone.map((p) => ({ time: p.date as Time, value: pick(p) })),
+          ]
+        : [];
+    p90Ref.current?.setData(coneLine((p) => p.p90));
+    p10Ref.current?.setData(coneLine((p) => p.p10));
+    p75Ref.current?.setData(coneLine((p) => p.p75));
+    p25Ref.current?.setData(coneLine((p) => p.p25));
+    medianRef.current?.setData(coneLine((p) => p.p50));
     chartRef.current?.timeScale().fitContent();
   }, [series, cone]);
 
@@ -150,6 +165,9 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
       topColor: c.bg,
       bottomColor: c.bg,
     });
+    // Quartile lines: dotted accent, fainter than the solid median.
+    p75Ref.current?.applyOptions({ color: c.coneInner });
+    p25Ref.current?.applyOptions({ color: c.coneInner });
     medianRef.current?.applyOptions({ color: c.cone });
   }, [theme]);
 

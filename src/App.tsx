@@ -173,7 +173,9 @@ export default function App() {
       ? {
           years: horizon,
           p10: cone[cone.length - 1].p10,
+          p25: cone[cone.length - 1].p25,
           p50: cone[cone.length - 1].p50,
+          p75: cone[cone.length - 1].p75,
           p90: cone[cone.length - 1].p90,
         }
       : null;
