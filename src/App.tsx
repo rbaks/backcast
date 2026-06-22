@@ -8,6 +8,12 @@ import {
 } from "react";
 import { computePortfolioValueSeries } from "./core/backtest.ts";
 import { computeStats, monthlyMoments } from "./core/stats.ts";
+import {
+  BENCHMARK_TICKERS,
+  benchmarkPortfolio,
+  compareToBenchmark,
+  type BenchmarkKind,
+} from "./core/benchmark.ts";
 import { BundledJsonProvider } from "./core/provider.ts";
 import {
   SCENARIO_ANNUAL_SHIFT,
@@ -21,6 +27,7 @@ import { HoldingsPanel } from "./components/HoldingsPanel.tsx";
 import { StatsPanel } from "./components/StatsPanel.tsx";
 import { ChartPanel } from "./components/ChartPanel.tsx";
 import { ProjectionControls } from "./components/ProjectionControls.tsx";
+import { BenchmarkControls } from "./components/BenchmarkControls.tsx";
 import { TopBar, type Range } from "./components/TopBar.tsx";
 import {
   applyTheme,
@@ -54,6 +61,17 @@ function rangeCutoff(endDate: string, range: Range): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Slice a value series to the selected range, measured back from `end`. The
+ *  portfolio and the benchmark share the same `end` so their right edges align. */
+function windowSeries(
+  series: ValuePoint[],
+  end: string,
+  range: Range,
+): ValuePoint[] {
+  const cutoff = rangeCutoff(end, range);
+  return series.filter((p) => p.date >= cutoff);
+}
+
 export default function App() {
   const provider = useMemo(() => new BundledJsonProvider(), []);
 
@@ -74,6 +92,11 @@ export default function App() {
   const [horizon, setHorizon] = useState(10); // years
   const [scenario, setScenario] = useState<Scenario>("base");
 
+  // Benchmark comparison: an index reference line + a "vs index" readout.
+  const [benchmarkOn, setBenchmarkOn] = useState(true);
+  const [benchmarkKind, setBenchmarkKind] = useState<BenchmarkKind>("voo");
+  const [benchPrices, setBenchPrices] = useState<Record<string, PriceSeries>>({});
+
   // Layout effect (not passive): the `data-theme` attribute swaps the CSS vars
   // that ChartPanel reads to repaint its canvas. Effects fire child-before-parent,
   // so a passive effect here would run AFTER ChartPanel's and leave the canvas one
@@ -93,6 +116,28 @@ export default function App() {
       })
       .catch(() => {
         /* non-fatal: add-row just loses autocomplete */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
+
+  // Load the fixed benchmark tickers once. They never change, so this runs a
+  // single time; switching the selector just re-slices the already-loaded map.
+  // Kept separate from `loadPrices` (which drives missingTickers / tickerKey on
+  // the user's holdings only).
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      BENCHMARK_TICKERS.map((t) =>
+        provider.getPrices(t).then((s) => [t, s] as const),
+      ),
+    )
+      .then((entries) => {
+        if (!cancelled) setBenchPrices(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        /* non-fatal: benchmark just won't render */
       });
     return () => {
       cancelled = true;
@@ -143,11 +188,51 @@ export default function App() {
   const windowed: ValuePoint[] = useMemo(() => {
     if (result.series.length === 0) return [];
     const end = result.series[result.series.length - 1].date;
-    const cutoff = rangeCutoff(end, range);
-    return result.series.filter((p) => p.date >= cutoff);
+    return windowSeries(result.series, end, range);
   }, [result.series, range]);
 
   const stats = useMemo(() => computeStats(windowed), [windowed]);
+
+  // Dollars actually invested = sum over USABLE holdings (drop tickers with no
+  // data) so the benchmark's base matches the portfolio's real invested capital.
+  const totalInvested = useMemo(() => {
+    const missing = new Set(result.missingTickers);
+    return portfolio.holdings
+      .filter((h) => !missing.has(h.ticker.toUpperCase()))
+      .reduce((s, h) => s + h.amount, 0);
+  }, [portfolio.holdings, result.missingTickers]);
+
+  // The benchmark: a synthetic portfolio through the same engine, windowed with
+  // the portfolio's own end date, then clipped to the portfolio's visible window
+  // so it can never widen the x-axis. Comparison runs on the overlap.
+  const benchmark = useMemo(() => {
+    if (!benchmarkOn || windowed.length < 2 || totalInvested <= 0) return null;
+    const benchPortfolio = benchmarkPortfolio(
+      benchmarkKind,
+      totalInvested,
+      result.startDate,
+    );
+    const benchFull = computePortfolioValueSeries(benchPortfolio, benchPrices)
+      .series;
+    if (benchFull.length === 0) return null;
+    const end = result.series[result.series.length - 1].date;
+    const windowedBenchmark = windowSeries(benchFull, end, range);
+    if (windowedBenchmark.length === 0) return null;
+    const portStart = windowed[0].date;
+    return {
+      line: windowedBenchmark.filter((p) => p.date >= portStart),
+      comparison: compareToBenchmark(windowed, windowedBenchmark),
+    };
+  }, [
+    benchmarkOn,
+    benchmarkKind,
+    benchPrices,
+    totalInvested,
+    result.series,
+    result.startDate,
+    windowed,
+    range,
+  ]);
 
   // --- forward projection ---
   // Moments come from the full history (more data = steadier estimate); the cone
@@ -270,6 +355,16 @@ export default function App() {
           </div>
 
           {status === "ready" && windowed.length > 1 && (
+            <BenchmarkControls
+              enabled={benchmarkOn}
+              onToggle={() => setBenchmarkOn((b) => !b)}
+              kind={benchmarkKind}
+              onKind={setBenchmarkKind}
+              comparison={benchmark?.comparison ?? null}
+            />
+          )}
+
+          {status === "ready" && windowed.length > 1 && (
             <ProjectionControls
               enabled={forecast}
               onToggle={() => setForecast((f) => !f)}
@@ -299,6 +394,7 @@ export default function App() {
             <ChartPanel
               series={windowed}
               cone={forecast ? cone : null}
+              benchmark={benchmark?.line ?? null}
               computing={forecast && coneComputing}
               theme={theme}
             />
