@@ -301,6 +301,9 @@ export default function App() {
   // --- readout ---
   const loading = status === "loading";
   const startValue = windowed[0]?.value ?? 0;
+  // The "invested from" date must match startValue: in a non-MAX window the
+  // baseline is the window's first visible point, not the portfolio inception.
+  const startValueDate = windowed[0]?.date ?? result.startDate;
   const endValue = windowed[windowed.length - 1]?.value ?? 0;
   const change = startValue > 0 ? endValue / startValue - 1 : 0;
   const gain = endValue - startValue;
@@ -348,7 +351,7 @@ export default function App() {
             )}
             <div className="sub">
               {formatCurrency(startValue || 0)} invested{" "}
-              {result.startDate ? `from ${result.startDate}` : ""} · total return,
+              {startValueDate ? `from ${startValueDate}` : ""} · total return,
               dividends reinvested (nominal)
               {result.clamped ? " · start clamped to available data" : ""}
             </div>
