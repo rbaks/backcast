@@ -24,3 +24,25 @@
 - **Context:** Thin backend (Bun/Node or FastAPI) owning a market-data layer (fetch → cache
   in SQLite/Postgres → serve). See "Approach B" in the design doc.
 - **Depends on:** v1 shipped; one of the triggers above actually fires.
+
+## Benchmark comparison — analyst tier (deferred)
+- **What:** Rolling 12-month relative-performance strip, tracking error, and beta on top
+  of the benchmark comparison feature.
+- **Why:** Deeper "is this portfolio riskier/streakier than the index" insight for users
+  who want it.
+- **Pros:** More "real terminal" depth; beta/TE are standard portfolio-analysis stats.
+- **Cons:** Analyst-grade; past the teaching-value point for a learning sandbox. Beta is
+  regression-based (more math + more UI than the headline delta).
+- **Context:** Deferred from the benchmark-comparison feature (CEO + eng review, 2026-06-22).
+  The headline ships total-return delta over the shown window; this is the next layer.
+- **Depends on:** benchmark comparison shipped.
+
+## Benchmark comparison — persist choice (deferred)
+- **What:** Persist benchmark on/off + selected kind (VOO/QQQ/60-40) in the URL and
+  localStorage, the way portfolio holdings already are.
+- **Why:** A shared link should preserve the comparison the sender was looking at.
+- **Pros:** Consistent with the existing shareable-URL state; small.
+- **Cons:** Touches `core/url.ts` encode/decode + adds two more state params.
+- **Context:** Deferred from the benchmark-comparison feature (CEO + eng review, 2026-06-22);
+  local component state is fine for v1.
+- **Depends on:** benchmark comparison shipped.

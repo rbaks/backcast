@@ -366,6 +366,87 @@
   color: var(--dim);
 }
 
+/* ---- benchmark comparison controls ----
+   Sits directly above .forecast (past-comparison reads before future-projection).
+   Coloured with --benchmark so the controls double as the chart legend. */
+.bench {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.bc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bc-toggle {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.bc-toggle:hover {
+  color: var(--text);
+  border-color: var(--benchmark);
+}
+.bc-toggle.on {
+  color: var(--benchmark);
+  border-color: var(--benchmark);
+}
+/* The steel-blue dot ties the benchmark control to its line on the chart. */
+.bc-dot {
+  color: var(--benchmark);
+}
+.bc-scen {
+  display: flex;
+  gap: 2px;
+}
+.bc-scen button {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+  background: none;
+  border: 1px solid transparent;
+  padding: 3px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.bc-scen button:hover {
+  color: var(--text);
+}
+.bc-scen button.on {
+  color: var(--bg);
+  background: var(--benchmark);
+  font-weight: 600;
+}
+.bc-readout {
+  margin-top: 6px;
+  font-size: 11px;
+}
+.bc-delta {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.bc-cagr {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+}
+.bc-caveat {
+  font-family: var(--sans);
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+
 .chart {
   flex: 1;
   position: relative;

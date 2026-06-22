@@ -17,16 +17,25 @@ interface Props {
   series: ValuePoint[];
   /** Forward projection band, anchored at the last historical point, or null. */
   cone: ConePoint[] | null;
+  /** Benchmark reference line, already clipped to the portfolio window, or null. */
+  benchmark?: ValuePoint[] | null;
   /** Monte Carlo run in flight — shows a non-blocking "projecting…" overlay. */
   computing?: boolean;
   /** Re-themes the chart in JS when this changes (CSS can't reach the canvas). */
   theme: Theme;
 }
 
-export function ChartPanel({ series, cone, computing = false, theme }: Props) {
+export function ChartPanel({
+  series,
+  cone,
+  benchmark = null,
+  computing = false,
+  theme,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const histRef = useRef<ISeriesApi<"Area"> | null>(null);
+  const benchRef = useRef<ISeriesApi<"Line"> | null>(null);
   const p90Ref = useRef<ISeriesApi<"Area"> | null>(null);
   const p10Ref = useRef<ISeriesApi<"Area"> | null>(null);
   const p75Ref = useRef<ISeriesApi<"Line"> | null>(null);
@@ -67,6 +76,15 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
       lineWidth: 2,
       priceLineVisible: false,
     });
+    // Benchmark reference line: solid, thin, on top of the history area so it
+    // stays readable. Created once here, fed conditionally below (the cone series
+    // use the same create-once / feed-conditionally pattern).
+    const bench = chart.addSeries(LineSeries, {
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    });
     // p25/p75 quartile lines sit inside the 80% band, marking the tighter 50%
     // interquartile range — a denser cone without a second fill to mask.
     const p75 = chart.addSeries(LineSeries, {
@@ -97,6 +115,7 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
     p75Ref.current = p75;
     p25Ref.current = p25;
     histRef.current = hist;
+    benchRef.current = bench;
     medianRef.current = median;
 
     return () => {
@@ -104,6 +123,7 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
       chartRef.current = null;
       histRef.current = p90Ref.current = p10Ref.current = null;
       p75Ref.current = p25Ref.current = null;
+      benchRef.current = null;
       medianRef.current = null;
     };
   }, []);
@@ -112,6 +132,12 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
   useEffect(() => {
     histRef.current?.setData(
       series.map((p) => ({ time: p.date as Time, value: p.value })),
+    );
+    // Benchmark line: feed the clipped series when on, clear it when off/null.
+    benchRef.current?.setData(
+      benchmark
+        ? benchmark.map((p) => ({ time: p.date as Time, value: p.value }))
+        : [],
     );
     // Anchor each cone line at the last historical point so it emanates from the
     // line rather than floating a month out.
@@ -131,7 +157,7 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
     p25Ref.current?.setData(coneLine((p) => p.p25));
     medianRef.current?.setData(coneLine((p) => p.p50));
     chartRef.current?.timeScale().fitContent();
-  }, [series, cone]);
+  }, [series, cone, benchmark]);
 
   // Re-theme in JS whenever the theme token set changes.
   useEffect(() => {
@@ -153,6 +179,7 @@ export function ChartPanel({ series, cone, computing = false, theme }: Props) {
       topColor: c.areaTop,
       bottomColor: c.areaBottom,
     });
+    benchRef.current?.applyOptions({ color: c.benchmark });
     // p90: translucent accent band fill, faint accent top edge.
     p90Ref.current?.applyOptions({
       lineColor: c.cone,

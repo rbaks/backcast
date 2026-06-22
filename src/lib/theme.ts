@@ -38,6 +38,8 @@ export interface ChartColors {
   coneFill: string;
   /** Faint accent for the p25/p75 quartile lines — denser than fill, softer than the median. */
   coneInner: string;
+  /** Benchmark reference line (steel blue): the index, not your picks, not the model. */
+  benchmark: string;
 }
 
 export function readChartColors(): ChartColors {
@@ -53,6 +55,7 @@ export function readChartColors(): ChartColors {
     cone,
     coneFill: hexToRgba(cone, 0.16),
     coneInner: hexToRgba(cone, 0.5),
+    benchmark: cssVar("--benchmark") || "#7aa2c4",
   };
 }
 
